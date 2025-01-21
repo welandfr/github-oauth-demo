@@ -33,14 +33,12 @@ app.get("/", (req, res) => {
 
 
 app.get("/auth", (req, res) => {
-    const params = {
-        scope: "read:user", // https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps
-        client_id: process.env.CLIENT_ID // Your GitHub OAuth app ID
-    }
 
-    // Encode params to url and redirect to github login
-    const urlParams = new URLSearchParams(params).toString();
-    res.redirect(`https://github.com/login/oauth/authorize?${urlParams}`);
+    // Add params to url and redirect to github login
+    //  scope: "read:user", // https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps
+    //  client_id: process.env.CLIENT_ID 
+
+    res.redirect(`https://github.com/login/oauth/authorize?scope=read:user&client_id=${process.env.CLIENT_ID}`)
 
 })
 
@@ -50,18 +48,17 @@ app.get("/github-callback", async (req, res) => {
     const body = {
         client_id: process.env.CLIENT_ID,
         client_secret: process.env.CLIENT_SECRET,
-        code: req.query.code, // github sends this
+        code: req.query.code, // github sends this, temporary code grant
     };
 
     try {
 
+        // Fetch the token from github
         const response = await fetch("https://github.com/login/oauth/access_token", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify(body)
         })
-        
-        // Token from github
         const data = await response.json()
 
         // User data from GitHub
@@ -81,6 +78,7 @@ app.get("/github-callback", async (req, res) => {
 
         console.log(token)
 
+        // Finally redirect back to our page 
         res.redirect(`/?token=${token}`);
 
     } catch (err) {
